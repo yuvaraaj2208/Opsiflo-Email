@@ -73,7 +73,8 @@ export function AIEmailWriter({ setup, onSelect }: AIEmailWriterProps) {
       const data = await response.json()
       setVariants(data.variants || [])
     } catch (error) {
-      toast.error('Failed to generate emails. Check your AI settings.')
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      toast.error(`AI error: ${msg}`)
     } finally {
       setLoading(false)
     }
