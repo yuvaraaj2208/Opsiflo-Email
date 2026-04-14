@@ -34,9 +34,9 @@ const routeLabels: Record<string, string> = {
 
 const planColors = {
   free: 'secondary',
-  basic: 'info',
-  pro: 'purple',
-  premium: 'premium',
+  starter: 'info',
+  professional: 'purple',
+  business: 'premium',
 } as const
 
 interface HeaderProps {

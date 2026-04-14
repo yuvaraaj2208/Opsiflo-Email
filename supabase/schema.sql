@@ -9,7 +9,7 @@ CREATE TABLE profiles (
   email TEXT NOT NULL,
   full_name TEXT,
   avatar_url TEXT,
-  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'basic', 'pro', 'premium')),
+  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'starter', 'professional', 'business')),
   plan_status TEXT NOT NULL DEFAULT 'trialing' CHECK (plan_status IN ('active', 'trialing', 'canceled', 'past_due')),
   trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days'),
   country TEXT,
@@ -197,7 +197,7 @@ CREATE TABLE referrals (
 CREATE TABLE subscriptions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  plan TEXT NOT NULL CHECK (plan IN ('basic', 'pro', 'premium')),
+  plan TEXT NOT NULL CHECK (plan IN ('starter', 'professional', 'business')),
   gateway TEXT NOT NULL CHECK (gateway IN ('razorpay', 'lemonsqueezy')),
   gateway_sub_id TEXT,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'canceled', 'past_due')),

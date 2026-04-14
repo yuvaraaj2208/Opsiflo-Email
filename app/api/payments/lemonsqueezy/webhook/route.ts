@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
       await supabase.from('subscriptions').upsert({
         user_id: userId,
-        plan: plan ?? 'basic',
+        plan: plan ?? 'starter',
         gateway: 'lemonsqueezy',
         gateway_sub_id: event.data?.id,
         status: sub?.status === 'active' ? 'active' : 'canceled',
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
       if (sub?.status === 'active') {
         await supabase.from('profiles').update({
-          plan: plan ?? 'basic',
+          plan: plan ?? 'starter',
           plan_status: 'active',
           ls_customer_id: String(sub?.customer_id),
         }).eq('id', userId)

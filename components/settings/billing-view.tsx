@@ -5,39 +5,45 @@ import { motion } from 'framer-motion'
 import { CreditCard, Check, Zap, Crown, Star, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import type { Profile, Subscription } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const plans = {
-  basic: {
-    name: 'Basic',
+  starter: {
+    name: 'Starter',
     icon: Star,
     color: 'text-blue-400',
     bg: 'from-blue-500/10',
     features: ['500 emails/month', '1 campaign', '500 prospects', 'AI writer', 'Response Score'],
-    priceINR: 199,
-    priceUSD: 9.99,
+    monthlyINR: 599,
+    annualINR: 475,
+    monthlyUSD: 19,
+    annualUSD: 15,
   },
-  pro: {
-    name: 'Pro',
+  professional: {
+    name: 'Professional',
     icon: Zap,
     color: 'text-purple-400',
     bg: 'from-purple-500/10',
     features: ['5,000 emails/month', '10 campaigns', '5,000 prospects', 'Sequences', 'A/B Testing', 'Reply Inbox'],
-    priceINR: 399,
-    priceUSD: 19.99,
+    monthlyINR: 1199,
+    annualINR: 950,
+    monthlyUSD: 39,
+    annualUSD: 31,
     popular: true,
   },
-  premium: {
-    name: 'Premium',
+  business: {
+    name: 'Business',
     icon: Crown,
     color: 'text-amber-400',
     bg: 'from-amber-500/10',
     features: ['Unlimited everything', 'All features', '50+ Templates', 'ROI Tracker', 'Warmup System', 'Priority Support'],
-    priceINR: 599,
-    priceUSD: 24.99,
+    monthlyINR: 1999,
+    annualINR: 1590,
+    monthlyUSD: 69,
+    annualUSD: 55,
   },
 }
 
@@ -49,17 +55,17 @@ interface BillingViewProps {
 
 export function BillingView({ profile, subscription, country }: BillingViewProps) {
   const [loading, setLoading] = useState<string | null>(null)
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
   const isIndia = country === 'IN'
 
   const handleUpgrade = async (plan: string) => {
     setLoading(plan)
     try {
       if (isIndia) {
-        // Razorpay flow
         const res = await fetch('/api/payments/razorpay/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan }),
+          body: JSON.stringify({ plan, billing }),
         })
         const { orderId, amount, currency } = await res.json()
 
@@ -68,7 +74,7 @@ export function BillingView({ profile, subscription, country }: BillingViewProps
           amount,
           currency,
           name: 'Opsiflo Email',
-          description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+          description: `${plans[plan as keyof typeof plans]?.name ?? plan} Plan`,
           order_id: orderId,
           handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
             const verifyRes = await fetch('/api/payments/razorpay/verify', {
@@ -96,16 +102,15 @@ export function BillingView({ profile, subscription, country }: BillingViewProps
         const rzp = new window.Razorpay(options)
         rzp.open()
       } else {
-        // Lemon Squeezy flow
         const res = await fetch('/api/payments/lemonsqueezy/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan }),
+          body: JSON.stringify({ plan, billing }),
         })
         const { checkoutUrl } = await res.json()
         window.location.href = checkoutUrl
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to initiate payment. Please try again.')
     } finally {
       setLoading(null)
@@ -156,22 +161,52 @@ export function BillingView({ profile, subscription, country }: BillingViewProps
         </CardContent>
       </Card>
 
+      {/* Billing period toggle */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">Billing:</span>
+        <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-white/5 border border-white/10">
+          <button
+            onClick={() => setBilling('monthly')}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              billing === 'monthly' ? 'bg-indigo-500 text-white' : 'text-muted-foreground hover:text-white'
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setBilling('annual')}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
+              billing === 'annual' ? 'bg-indigo-500 text-white' : 'text-muted-foreground hover:text-white'
+            }`}
+          >
+            Annual
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+              billing === 'annual' ? 'bg-white/20' : 'bg-emerald-500/20 text-emerald-400'
+            }`}>
+              Save 20%
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {(Object.entries(plans) as [string, typeof plans.basic & { popular?: boolean }][]).map(([planKey, plan]) => {
+        {(Object.entries(plans) as [string, typeof plans.starter & { popular?: boolean }][]).map(([planKey, plan]) => {
           const Icon = plan.icon
           const isCurrentPlan = currentPlan === planKey
-          const price = isIndia ? `₹${plan.priceINR}` : `$${plan.priceUSD}`
+          const price = isIndia
+            ? `₹${billing === 'annual' ? plan.annualINR : plan.monthlyINR}`
+            : `$${billing === 'annual' ? plan.annualUSD : plan.monthlyUSD}`
 
           return (
             <motion.div
               key={planKey}
               whileHover={{ scale: 1.02 }}
-              className={`rounded-xl border p-5 transition-all ${
+              className={`rounded-xl border p-5 transition-all relative ${
                 isCurrentPlan
                   ? 'border-indigo-500/50 bg-indigo-500/10'
                   : 'border-white/10 glass-card'
-              } ${'popular' in plan && plan.popular ? 'relative' : ''}`}
+              }`}
             >
               {'popular' in plan && plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -182,11 +217,14 @@ export function BillingView({ profile, subscription, country }: BillingViewProps
                 <Icon className="h-5 w-5" />
               </div>
               <h3 className="font-bold text-white text-lg">{plan.name}</h3>
-              <div className="flex items-baseline gap-1 my-2">
+              <div className="flex items-baseline gap-1 my-1">
                 <span className="text-2xl font-bold text-white">{price}</span>
                 <span className="text-muted-foreground text-sm">/month</span>
               </div>
-              <div className="space-y-2 mb-4">
+              {billing === 'annual' && (
+                <p className="text-xs text-emerald-400 mb-2">Billed annually</p>
+              )}
+              <div className="space-y-2 mb-4 mt-3">
                 {plan.features.map((f) => (
                   <div key={f} className="flex items-center gap-2 text-sm text-slate-300">
                     <Check className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
@@ -201,7 +239,7 @@ export function BillingView({ profile, subscription, country }: BillingViewProps
               ) : (
                 <Button
                   className="w-full"
-                  variant={currentPlan === 'free' || planKey === 'premium' ? 'default' : 'outline'}
+                  variant={currentPlan === 'free' || planKey === 'business' ? 'default' : 'outline'}
                   loading={loading === planKey}
                   onClick={() => handleUpgrade(planKey)}
                 >

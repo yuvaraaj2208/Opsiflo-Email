@@ -1,4 +1,4 @@
-export type Plan = 'free' | 'basic' | 'pro' | 'premium'
+export type Plan = 'free' | 'starter' | 'professional' | 'business'
 export type PlanStatus = 'active' | 'trialing' | 'canceled' | 'past_due'
 export type Gateway = 'razorpay' | 'lemonsqueezy'
 
@@ -236,7 +236,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     roi_tracker: false,
     warmup_system: false,
   },
-  basic: {
+  starter: {
     emails_per_month: 500,
     campaigns: 1,
     prospects: 500,
@@ -249,7 +249,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     roi_tracker: false,
     warmup_system: false,
   },
-  pro: {
+  professional: {
     emails_per_month: 5000,
     campaigns: 10,
     prospects: 5000,
@@ -262,7 +262,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     roi_tracker: false,
     warmup_system: false,
   },
-  premium: {
+  business: {
     emails_per_month: null,
     campaigns: null,
     prospects: null,

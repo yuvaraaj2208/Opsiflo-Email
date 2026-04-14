@@ -31,7 +31,7 @@ export function AdminDashboard({ users, globalStats, totalUsers, paidUsers }: Ad
     { label: 'Global Reply Rate', value: globalStats.emails > 0 ? ((globalStats.replies / globalStats.emails) * 100).toFixed(1) + '%' : '0%', icon: TrendingUp, color: 'text-cyan-400' },
   ]
 
-  const planColors = { free: 'secondary', basic: 'info', pro: 'purple', premium: 'premium' } as const
+  const planColors = { free: 'secondary', starter: 'info', professional: 'purple', business: 'premium' } as const
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -63,7 +63,7 @@ export function AdminDashboard({ users, globalStats, totalUsers, paidUsers }: Ad
       </motion.div>
 
       <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {(['free', 'basic', 'pro', 'premium'] as const).map((plan) => (
+        {(['free', 'starter', 'professional', 'business'] as const).map((plan) => (
           <Card key={plan} glass>
             <CardContent className="p-4 text-center">
               <Badge variant={planColors[plan]} className="mb-2 capitalize">{plan}</Badge>

@@ -7,10 +7,10 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 })
 
-const PLAN_AMOUNTS: Record<string, number> = {
-  basic: 19900,   // ₹199 in paise
-  pro: 39900,     // ₹399 in paise
-  premium: 59900, // ₹599 in paise
+const PLAN_AMOUNTS: Record<string, { monthly: number; annual: number }> = {
+  starter:      { monthly: 59900,  annual: 47500  }, // ₹599/mo, ₹475/mo billed annually
+  professional: { monthly: 119900, annual: 95000  }, // ₹1,199/mo, ₹950/mo billed annually
+  business:     { monthly: 199900, annual: 159000 }, // ₹1,999/mo, ₹1,590/mo billed annually
 }
 
 export async function POST(req: NextRequest) {
@@ -22,19 +22,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { plan } = await req.json()
+    const { plan, billing = 'monthly' } = await req.json()
 
     if (!PLAN_AMOUNTS[plan]) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
+    const amount = billing === 'annual'
+      ? PLAN_AMOUNTS[plan].annual * 12
+      : PLAN_AMOUNTS[plan].monthly
+
     const order = await razorpay.orders.create({
-      amount: PLAN_AMOUNTS[plan],
+      amount,
       currency: 'INR',
       receipt: `order_${user.id}_${Date.now()}`,
       notes: {
         user_id: user.id,
         plan,
+        billing,
       },
     })
 

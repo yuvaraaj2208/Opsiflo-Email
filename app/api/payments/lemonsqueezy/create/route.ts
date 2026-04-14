@@ -3,10 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 
 const LS_API_URL = 'https://api.lemonsqueezy.com/v1'
 
-const PLAN_VARIANTS: Record<string, string> = {
-  basic: process.env.LS_VARIANT_BASIC ?? '',
-  pro: process.env.LS_VARIANT_PRO ?? '',
-  premium: process.env.LS_VARIANT_PREMIUM ?? '',
+const PLAN_VARIANTS: Record<string, { monthly: string; annual: string }> = {
+  starter:      { monthly: process.env.LS_VARIANT_STARTER_MONTHLY ?? '',      annual: process.env.LS_VARIANT_STARTER_ANNUAL ?? '' },
+  professional: { monthly: process.env.LS_VARIANT_PROFESSIONAL_MONTHLY ?? '', annual: process.env.LS_VARIANT_PROFESSIONAL_ANNUAL ?? '' },
+  business:     { monthly: process.env.LS_VARIANT_BUSINESS_MONTHLY ?? '',     annual: process.env.LS_VARIANT_BUSINESS_ANNUAL ?? '' },
 }
 
 export async function POST(req: NextRequest) {
@@ -18,13 +18,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { plan } = await req.json()
+    const { plan, billing = 'monthly' } = await req.json()
 
-    const variantId = PLAN_VARIANTS[plan]
+    const variantId = PLAN_VARIANTS[plan]?.[billing as 'monthly' | 'annual']
     if (!variantId) {
       // Return mock URL for development
       return NextResponse.json({
-        checkoutUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing?plan=${plan}&success=true`,
+        checkoutUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing?plan=${plan}&billing=${billing}&success=true`,
       })
     }
 
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
               custom: {
                 user_id: user.id,
                 plan,
+                billing,
               },
             },
             product_options: {

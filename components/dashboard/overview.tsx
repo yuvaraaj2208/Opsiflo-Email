@@ -289,24 +289,24 @@ export function DashboardOverview({
                 <div>
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>Emails sent</span>
-                    <span>{formatNumber(stats.totalSent)} / {profile.plan === 'premium' ? '∞' : '500'}</span>
+                    <span>{formatNumber(stats.totalSent)} / {profile.plan === 'business' ? '∞' : '500'}</span>
                   </div>
                   <Progress
-                    value={profile.plan === 'premium' ? 0 : Math.min(100, (stats.totalSent / 500) * 100)}
+                    value={profile.plan === 'business' ? 0 : Math.min(100, (stats.totalSent / 500) * 100)}
                     gradient
                   />
                 </div>
                 <div>
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>Prospects</span>
-                    <span>{formatNumber(totalProspects)} / {profile.plan === 'premium' ? '∞' : '500'}</span>
+                    <span>{formatNumber(totalProspects)} / {profile.plan === 'business' ? '∞' : '500'}</span>
                   </div>
                   <Progress
-                    value={profile.plan === 'premium' ? 0 : Math.min(100, (totalProspects / 500) * 100)}
+                    value={profile.plan === 'business' ? 0 : Math.min(100, (totalProspects / 500) * 100)}
                     gradient
                   />
                 </div>
-                {profile.plan !== 'premium' && (
+                {profile.plan !== 'business' && (
                   <Button variant="gradient" size="sm" className="w-full mt-2" asChild>
                     <Link href="/settings/billing">Upgrade Plan</Link>
                   </Button>
