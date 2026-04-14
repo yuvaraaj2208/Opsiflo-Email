@@ -65,35 +65,13 @@ export function AIEmailWriter({ setup, onSelect }: AIEmailWriterProps) {
         }),
       })
 
-      if (!response.body) throw new Error('No response body')
-
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let accumulated = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6))
-              if (data.text) {
-                accumulated += data.text
-                setStreamText(accumulated)
-              }
-              if (data.done && data.result) {
-                setVariants(data.result.variants || [])
-                setStreamText('')
-              }
-            } catch {}
-          }
-        }
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || 'Failed to generate')
       }
+
+      const data = await response.json()
+      setVariants(data.variants || [])
     } catch (error) {
       toast.error('Failed to generate emails. Check your AI settings.')
     } finally {

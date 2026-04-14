@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { industry, senderName, company, product, prospectRole, goal, tone, includeEmoji } = await req.json()
+    const { industry, senderName, company, product, prospectRole, goal, includeEmoji } = await req.json()
 
     const goalDescriptions: Record<string, string> = {
       cold_outreach: 'cold outreach to introduce the product',
@@ -32,19 +32,16 @@ Context:
 - Product/Service: ${product}
 - Target: ${prospectRole} in ${industry}
 - Goal: ${goalDescriptions[goal] || goal}
-- Preferred tone: ${tone || 'Professional'}
 - Include emojis in subject: ${includeEmoji ? 'yes' : 'no'}
 
-Generate 3 DIFFERENT email variants. Each should have a distinct approach.
+Generate 3 DIFFERENT email variants with distinct approaches.
 
 For each variant provide:
 - subject: compelling subject line (max 60 chars)
-- body: email body (150-250 words), starting with personalized opener, ending with clear CTA
+- body: email body (150-250 words), personalized opener, clear CTA
 - ps_line: a P.S. line that adds urgency or social proof
 - predicted_open_rate: number 15-50 (realistic)
 - tone: "Professional" | "Friendly" | "Bold"
-
-IMPORTANT: Make each variant genuinely different in approach, structure, and CTA.
 
 Respond ONLY with valid JSON:
 {
@@ -55,52 +52,26 @@ Respond ONLY with valid JSON:
       "ps_line": "...",
       "predicted_open_rate": 32,
       "tone": "Professional"
-    },
-    ...
+    }
   ]
 }`
 
-    const stream = client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const encoder = new TextEncoder()
+    const text = message.content[0].type === 'text' ? message.content[0].text : ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
 
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          let fullText = ''
+    if (!jsonMatch) {
+      return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
+    }
 
-          for await (const chunk of stream) {
-            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-              fullText += chunk.delta.text
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`))
-            }
-          }
+    const parsed = JSON.parse(jsonMatch[0])
 
-          // Send the final parsed result
-          const jsonMatch = fullText.match(/\{[\s\S]*\}/)
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0])
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, result: parsed })}\n\n`))
-          }
-
-          controller.close()
-        } catch (error) {
-          controller.error(error)
-        }
-      },
-    })
-
-    return new NextResponse(readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-    })
+    return NextResponse.json({ variants: parsed.variants || [] })
   } catch (error) {
     console.error('Generate email error:', error)
     return NextResponse.json({ error: 'Failed to generate email' }, { status: 500 })

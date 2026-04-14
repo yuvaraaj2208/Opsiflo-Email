@@ -30,7 +30,7 @@ Write a concise, professional follow-up response that:
 Respond with just the email text, no subject line.`
 
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 512,
       messages: [{ role: 'user', content: prompt }],
     })
