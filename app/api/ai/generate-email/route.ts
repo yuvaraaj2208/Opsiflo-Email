@@ -76,6 +76,7 @@ Respond ONLY with valid JSON:
     return NextResponse.json({ variants: parsed.variants || [] })
   } catch (error) {
     console.error('Generate email error:', error)
-    return NextResponse.json({ error: 'Failed to generate email' }, { status: 500 })
+    const message = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
